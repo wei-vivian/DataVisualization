@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html>
+    <head>
+		<title>Drug</title>
+        <script src="https://d3js.org/d3.v4.js"></script>
+        <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/gh/holtzy/D3-graph-gallery@master/LIB/d3-scale-radial.js"></script>
+
+        <!--<meta charset="utf-8">-->
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<style>
+			
+            .bubbles {
+                stroke-width: 2px;
+                stroke: white;
+                opacity: .8
+            }
+
+            .bubbles:hover {
+                stroke: black;
+            }
+		</style>
+    </head>
+    <body bgcolor="#f5faff">
+        <p style="text-align:center"><font face="monospace" size="10" color="#002144">Pharmacy Transaction</font></p>
+        
+        <p> </p>
+        <p> </p>
+        <div id = "Bubble_Plot"></div>
+        <p style="text-align:center"><font face="monospace" size="10" color="#002144">Class Information</font></p>
+        <button onclick="update(data1)" style="width:150px;height:30px;font-size:20px;"><font face="monospace">Sales</font></button>
+        <button onclick="update(data2)" style="width:150px;height:30px;font-size:20px;"><font face="monospace">Transaction</font></button>
+        <div id = "Gender_Plot"></div>
+        <div align="left" style="position:relative;top:20px">
+            <input type ="button" onclick="javascript:location.href='Mini project.html'" value="Items"></input>
+        </div>
+        
+
+        <script type="text/javascript">
+            /*
+            Set the dimensions and margins of the graph
+            */
+
+            let margin = {top: 50, right: 150, bottom: 60, left: 50},
+                        width = 2000 - margin.left - margin.right,
+                        height = 840 - margin.top - margin.bottom;
+
+
+            /*
+            Append the svg object to the body of the page
+            */
+
+            let svg = d3.select("#Bubble_Plot")
+                        .append("svg")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                        .append("g")
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            
+            /*
+            Append the svg object to the body of the page
+            */
+
+            var margin1 = {top: 50, right: 150, bottom: 60, left: 50},
+                           width1 = 1400 - margin.left - margin.right,
+                           height1 = 540 - margin.top - margin.bottom;
+   
+            // append the svg object
+
+            let svg1 = d3.select("#Gender_Plot")
+                        .append("svg")
+                            .attr("width", width1 + margin1.left + margin1.right)
+                            .attr("height", height1 + margin1.top + margin1.bottom)
+                        .append("g")
+                            .attr("transform", "translate(" + margin1.left + "," + margin1.top + ")");
+
+            
+            var width2 = 550, height2 = 550, margin2 = 100;
+            
+            var radius = Math.min(width2, height2) / 2 - margin2;
+            let svg2 = d3.select("#Class_Plot")
+                        .append("svg")
+                           .attr("width", width2)
+                           .attr("height", height2)
+                        .append("g")
+                           .attr("transform", "translate(" + width2/2+ "," + height2/2 + ")");
+
+            var data1 = [
+                       {group: "A", value: 0},
+                       {group: "B", value: 0},
+                       {group: "C", value: 0},
+                       {group: "D", value: 0},
+                       {group: "E", value: 0}
+                    ];
+            var data2 = [
+                       {group: "A", value: 0},
+                       {group: "B", value: 0},
+                       {group: "C", value: 0},
+                       {group: "D", value: 0},
+                       {group: "E", value: 0}
+                    ];
+           
+            /* 
+            Read File 
+            */
+            d3.csv('2018-chienyeh.csv', function(error, data){
+                if(error){
+                    console.log(error);
+                }
+                else{ 
+                    /*
+                    Object: Drug
+                    */
+                    function Drug(){
+                        let Name = {}, SellingPrice = {}, Trans = {}, Sales = {}, Classes = {}, male = {}, female = {};
+                        
+                        this.set = function(drug_no, name, sellingPrice, sales, classes, gender){
+                            Name[drug_no] = name;
+                            SellingPrice[drug_no] = sellingPrice;
+                            Trans[drug_no] = 1;
+                            Sales[drug_no] = sales;
+                            Classes[drug_no] = classes;
+                            if(gender == '女'){
+                                female[drug_no] = 1;
+                            }
+                            else if (gender == '男'){
+                                male[drug_no] = 1;
+                            }
+                        };
+                        this.has = function(drug_no) {
+                            return drug_no in Name;
+                        };
+                        this.size = function(){
+                            return Object.keys(Name).length;
+                        };
+                        this.keys = function(){
+                            return Object.keys(Name);
+                        }
+                        this.update = function(drug_no, sales, gender){
+                            Trans[drug_no] = Trans[drug_no]+1;
+                            Sales[drug_no] = Sales[drug_no]+sales;
+                            if(gender == '女'){
+                                female[drug_no] = female[drug_no]+1;
+                            }
+                            else if (gender == '男'){
+                                male[drug_no] = male[drug_no]+1;
+                            }
+                        }
+                        this.NameValues = function() {
+                            let values = [];
+                            for(let k in Name) {
+                                if(this.has(k)) {
+                                    values.push(Name[k]);
+                                }
+                            }
+                            return values;
+                        };
+                        this.SPValues = function() {
+                            let values = [];
+                            for(let k in SellingPrice) {
+                                if(this.has(k)) {
+                                    values.push(SellingPrice[k]);
+                                }
+                            }
+                            return values;
+                        };
+                        this.TransValues = function() {
+                            let values = [];
+                            for(let k in Trans) {
+                                if(this.has(k)) {
+                                    values.push(Trans[k]);
+                                }
+                            }
+                            return values;
+                        };
+                        this.SalesValues = function() {
+                            let values = [];
+                            for(let k in Sales) {
+                                if(this.has(k)) {
+                                    values.push(Sales[k]);
+                                }
+                            }
+                            return values;
+                        };
+                        this.ClassesValues = function() {
+                            let values = [];
+                            for(let k in Classes) {
+                                if(this.has(k)) {
+                                    values.push(Classes[k]);
+                                }
+                            }
+                            return values;
+                        };
+                        this.MaleValue = function() {
+                            let values = [];
+                            for(let k in Classes) {
+                                if(this.has(k)) {
+                                    values.push(male[k]);
+                                }
+                            }
+                            return values;
+                        };
+                        this.FemaleValues = function() {
+                            let values = [];
+                            for(let k in Classes) {
+                                if(this.has(k)) {
+                                    values.push(female[k]);
+                                }
+                            }
+                            return values;
+                        };
+                    }
+
+                    /*
+                    Define New Objects
+                    */
+                    const DrugList = new Drug;
+                
+                    /*
+                    Read Data
+                    */
+                    
+                    for(let i = 0; i < data.length; i++){
+                        if(data[i]['銷售量'] > 0 && data[i]['售價'] > 100 && (data[i]['等級'] == 'A' || data[i]['等級'] == 'B' || data[i]['等級'] == 'C' || data[i]['等級'] == 'D' || data[i]['等級'] == 'E')){
+                            if(DrugList.has(parseInt(data[i]['藥品代號'])) == false){
+                               
+                                DrugList.set(parseInt(data[i]['藥品代號']), data[i]['藥品名稱'], parseInt(data[i]['售價']), parseInt(data[i]['銷售量']), data[i]['等級'], data[i]['性別']);
+                            }
+                            else{
+                                DrugList.update(parseInt(data[i]['藥品代號']), parseInt(data[i]['銷售量'], data[i]['性別']));
+                            }
+                        }
+                    }
+
+                    /*
+                    Set attrbute
+                    */
+                    let DrugKeys = DrugList.keys(), name = DrugList.NameValues(), sp = DrugList.SPValues(),
+                        trans = DrugList.TransValues(), sales = DrugList.SalesValues(), classes = DrugList.ClassesValues(), 
+                        male = DrugList.MaleValue(), female = DrugList.FemaleValues();
+                    console.log(DrugKeys.length);
+                    console.log(sales);
+                    console.log(trans);
+                    let a_s =0, a_t = 0, a_m =0, 
+                        b_s =0, b_t = 0, b_m =0, 
+                        c_s =0, c_t = 0, c_m = 0, 
+                        d_s =0, d_t = 0, d_m = 0, 
+                        e_s =0, e_t = 0, e_m = 0;
+                    
+                    for(let i = 0; i < DrugKeys.length; i++){
+                        switch(classes[i]){
+                            case 'A':
+                                a_s +=  sales[i];
+                                a_t += trans[i];
+                                a_m += 1;
+                                break;
+                            case 'B':
+                                b_s +=  sales[i];
+                                b_t += trans[i];
+                                b_m += 1;
+                                break;
+                            case 'C':
+                                c_s +=  sales[i];
+                                c_t += trans[i];
+                                c_m += 1;
+                                break;
+                            case 'D':
+                                d_s +=  sales[i];
+                                d_t += trans[i];
+                                d_m += 1;
+                                break;
+                            case 'E':
+                                e_s +=  sales[i];
+                                e_t += trans[i];
+                                e_m += 1;
+                                break;
+                        }
+                    }
+                    console.log(a_m);
+                    console.log(b_m);
+                    console.log(c_m);
+                    console.log(d_m);
+                    console.log(e_m);
+                    data1 = [
+                       {group: "A", value: a_s},
+                       {group: "B", value: b_s},
+                       {group: "C", value: c_s},
+                       {group: "D", value: d_s},
+                       {group: "E", value: e_s}
+                    ];
+                    data2 = [
+                       {group: "A", value: a_t},
+                       {group: "B", value: b_t},
+                       {group: "C", value: c_t},
+                       {group: "D", value: d_t},
+                       {group: "E", value: e_t}
+                    ];
+   
+                    console.log(data1);
+
+                    let DrugPlotData = [];
+                    function PlotData(name, sp, trans, sales, calsses){
+                        this.name = name;
+                        this.sellingPrice = sp;
+                        this.transaction = trans;
+                        this.sales = sales;
+                        this.c = classes;
+                    }
+                    for(let i = 0; i < DrugKeys.length; i++){
+                        let temp = new PlotData;
+                        temp.name = name[i];
+                        temp.sellingPrice = sp[i];
+                        temp.transaction = trans[i];
+                        temp.sales = sales[i];
+                        temp.c = classes[i];
+                        DrugPlotData.push(temp);
+                    }
+
+
+                    /*
+                    Add X axis
+                    */
+                    let x = d3.scaleLinear()
+                              .domain([Math.min(...trans), Math.max(...trans)+20])
+                              .range([0, width*0.6]);
+                    
+                    svg.append("g")
+                       .attr("transform", "translate(0," + (height*0.6) + ")")
+                       .call(d3.axisBottom(x));
+
+                    /*
+                    Add X axis label
+                    */
+                    svg.append("text")
+                       .attr("text-anchor", "end")
+                       .attr("x", width*0.6)
+                       .attr("y", height*0.7)
+                       .style("font-size", 25)
+                       .text("Transaction");
+
+                    /*
+                    Add Y axis
+                    */
+                    
+                    let y = d3.scaleLinear()
+                              .domain([Math.min(...sp), Math.max(...sp)])
+                              .range([height*0.6, 0]);
+                    
+                    svg.append("g")
+                       .call(d3.axisLeft(y));
+
+                    /*
+                    Add Ｙ axis label
+                    */
+                    svg.append("text")
+                       .attr("text-anchor", "end")
+                       .attr("x", 0)
+                       .attr("y", -20)
+                       .text("Selling Price")
+                       .style("font-size", 25)
+                       .attr("text-anchor", "start");
+
+                    /*
+                    Add a scale for bubble size
+                    */
+                    let z = d3.scaleSqrt()
+                              .domain([Math.min(...sales), Math.max(...sales)])
+                              .range([5, 30]);
+
+                    /*
+                    Add a scale for bubble color
+                    */
+                    let myColor = d3.scaleOrdinal()
+                                    .domain(["A", "B", "C", "D", "E"])
+                                    .range(d3.schemeSet1);
+                    let myColor2 = d3.scaleOrdinal()
+                                    .domain(["A", "B", "C", "D", "E"])
+                                    .range(d3.schemeSet2);
+
+                    
+                    /*
+                    What to do when one group is hovered
+                    */
+                   
+                    var highlight = function(d){
+                        console.log(d);
+                        // reduce opacity of all groups
+                        d3.selectAll(".bubbles").style("opacity", .05)
+                        // expect the one that is hovered
+                        d3.selectAll("."+d).style("opacity", 1)
+                        }
+                    /*
+                    What to do when one group is not hovered
+                    */
+                    var noHighlight = function(d){
+                                        d3.selectAll(".bubbles").style("opacity", 1);
+                                        };
+
+                    /*
+                    Add dots
+                    */
+                   
+                    svg.append('g')
+                       .selectAll("dot")
+                       .data(DrugPlotData)
+                       .enter()
+                       .append("circle")
+                       .attr("class", function(d) { return "bubbles " + d.c })
+                       .attr("cx", function (d) { return x(d.transaction);})
+                       .attr("cy", function (d) { return y(d.sellingPrice);})
+                       .attr("r", function (d) { return z(d.sales);})
+                       .style("opacity", "0.7")
+                       .attr("stroke", "black")
+                       .style("fill", function (d) { return myColor(d.c);})
+                       .on("mouseover", function(d){
+                            svg.append("text")
+                              .text(d.name)
+                              .attr("x", x(d.transaction))
+                              .attr("y", y(d.sellingPrice)+50)
+                              .attr("fill", "black")
+                              .attr("id", "tooltip");
+
+                            infoName(d);
+                            infoSP(d);
+                            infoTrans(d);
+                            infoC(d);
+                             
+                        })
+                        .on("mouseout", function(d){
+                                console.log(d3.select("#tooltip"));
+                                d3.select("#tooltip").remove();
+                                d3.select("#infoName").remove();
+                                d3.select("#infoSP").remove();
+                                d3.select("#infoC").remove();
+                                d3.select("#infoAvg").remove();
+                                
+                        });
+
+                    /*
+                    Add legend: circles
+                    */
+                    var valuesToShow = [50, 2000, 7500];
+                    var xCircle = width*0.65;
+                    var xLabel = width*0.65+50;
+
+                    svg.selectAll("legend")
+                       .data(valuesToShow)
+                       .enter()
+                       .append("circle")
+                       .attr("cx", xCircle)
+                       .attr("cy", function(d){ return height - 350 - z(d) } )
+                       .attr("r", function(d){ return z(d) })
+                       .style("fill", "none")
+                       .attr("stroke", "black");
+
+                    /*
+                    Add legend: segments
+                    */
+                    svg.selectAll("legend")
+                       .data(valuesToShow)
+                       .enter()
+                       .append("line")
+                       .attr('x1', function(d){ return xCircle + z(d) } )
+                       .attr('x2', xLabel)
+                       .attr('y1', function(d){ return height - 350 - z(d) } )
+                       .attr('y2', function(d){ return height - 350 - z(d) } )
+                       .attr('stroke', 'black')
+                       .style('stroke-dasharray', ('2,2'));
+                    
+                    /*
+                    Add legend: segments
+                    */
+                    svg.selectAll("legend")
+                       .data(valuesToShow)
+                       .enter()
+                       .append("text")
+                       .attr('x', xLabel)
+                       .attr('y', function(d){ return height - 350 - z(d) } )
+                       .text( function(d){ return d } )
+                       .style("font-size", 12)
+                       .attr('alignment-baseline', 'middle');
+                    
+                    /*
+                    Legend title
+                    */
+                    svg.append("text")
+                       .attr('x', xCircle)
+                       .attr("y", height - 320)
+                       .text("銷售量")
+                       .style("font-size", 20)
+                       .attr("text-anchor", "middle");
+                    
+                    /*
+                    Add one dot in the legend for each name.
+                    */
+                    var size = 20;
+                    var allgroups = ["A", "B", "C", "D", "E"];
+                    
+                    svg.selectAll("myrect")
+                       .data(allgroups)
+                       .enter()
+                       .append("circle")
+                       .attr("cx", xCircle-5)
+                       .attr("cy", function(d,i){ return 100 + i*(size+8)}) // 100 is where the first dot appears. 25 is the distance between dots
+                       .attr("r", 8)
+                       .style("fill", function(d){ return myColor(d)})
+                       .on("mouseover", highlight)
+                       .on("mouseleave", noHighlight);
+                       
+                    
+
+                    /*
+                    Add labels beside legend dots
+                    */
+                    svg.selectAll("mylabels")
+                       .data(allgroups)
+                       .enter()
+                       .append("text")
+                       .attr("x", xCircle+7)
+                       .attr("y", function(d,i){ return 102 + i*(size+8)}) // 100 is where the first dot appears. 25 is the distance between dots
+                       .style("fill", function(d){ return myColor(d)})
+                       .text(function(d){ return d})
+                       .attr("text-anchor", "left")
+                       .style("alignment-baseline", "middle")
+                       .on("mouseover", highlight)
+                       .on("mouseleave", noHighlight);
+                    
+                    /*
+                    Legend dots title
+                    */
+                    svg.append("text")
+                       .attr('x', xCircle)
+                       .attr("y", 250)
+                       .text("等級")
+                       .style("font-size", 20)
+                       .attr("text-anchor", "middle");
+
+                    function infoName(d){
+                        svg.append("text")
+                           .attr('x', 1500)
+                           .attr("y", 20)
+                           .text('藥名： '+d.name)
+                           .style("font-size", 20)
+                           .attr("text-anchor", "middle")
+                           .attr("id", "infoName");;
+                    }
+                    function infoSP(d){
+                        svg.append("text")
+                           .attr('x', 1500)
+                           .attr("y", 60)
+                           .text('售價： '+d.sellingPrice)
+                           .style("font-size", 20)
+                           .attr("text-anchor", "middle")
+                           .attr("id", "infoSP");;
+                    }
+                    function infoC(d){
+                        svg.append("text")
+                           .attr('x', 1500)
+                           .attr("y", 100)
+                           .text('級別： '+ d.c)
+                           .style("font-size", 20)
+                           .attr("text-anchor", "middle")
+                           .attr("id", "infoC");;
+                    }
+                    function infoTrans(d){
+                        svg.append("text")
+                           .attr('x', 1500)
+                           .attr("y", 140)
+                           .text('每筆交易平均銷售量： '+ d.sales/d.transaction)
+                           .style("font-size", 20)
+                           .attr("text-anchor", "middle")
+                           .attr("id", "infoAvg");;
+                    }
+
+                    // Initialize the plot with the first dataset
+                    update(data1);
+
+                }
+            });
+
+            // Initialize the X axis
+            var x2 = d3.scaleBand()
+                        .range([ 0, width1 ])
+                        .padding(0.2);
+            var xAxis2 = svg1.append("g")
+                            .attr("transform", "translate(0," + height1 + ")");
+                    
+            // Initialize the Y axis
+            var y2 = d3.scaleLinear()
+                        .range([ height1, 0]);
+            var yAxis2 = svg1.append("g")
+                            .attr("class", "myYaxis")
+
+            // A function that create / update the plot for a given variable:
+            function update(data) {
+
+                let myColor2 = d3.scaleOrdinal()
+                                    .domain(["A", "B", "C", "D", "E"])
+                                    .range(d3.schemeSet2);
+
+                // Update the X axis
+                x2.domain(data.map(function(d) { console.log(d.group); return d.group; }));
+                xAxis2.call(d3.axisBottom(x2));
+
+                // Update the Y axis
+                y2.domain([0, d3.max(data, function(d) { console.log(d.value); return d.value }) ]);
+                yAxis2.transition().duration(1000).call(d3.axisLeft(y2));
+
+                // Create the u variable
+                var u = svg1.selectAll("rect")
+                            .data(data);
+
+                u.enter()
+                .append("rect") // Add a new rect for each new elements
+                .merge(u) // get the already existing elements as well
+                .transition() // and apply changes to all of them
+                .duration(1000)
+                .attr("x", function(d) { console.log(d.group); return x2(d.group); })
+                .attr("y", function(d) { return y2(d.value); })
+                .attr("width", x2.bandwidth())
+                .attr("height", function(d) { return height1 - y2(d.value); })
+                .attr("fill", function(d) { return myColor2(d.value);});
+
+                // If less group in the new dataset, I delete the ones not in use anymore
+                u.exit()
+                .remove();
+            }
+
+            
+        </script>
+    </body>
+</html>
